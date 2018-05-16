@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace ExcelTimeCheck
 {
@@ -13,9 +16,14 @@ namespace ExcelTimeCheck
         private string sheetName = "打卡时间";
         private int firstColume = 0;
         private int lastColume = 0;
+
+        string[] char26 = { "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", 
+                         "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"};
+
         public Form1()
         {
             InitializeComponent();
+            sheetNameTB.Text = sheetName;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -76,63 +84,113 @@ namespace ExcelTimeCheck
         private void sheetNameTB_TextChanged(object sender, EventArgs e)
         {
             sheetName = sheetNameTB.Text;
-            if (!string.IsNullOrEmpty(xlsxFileOpenPath) && File.Exists(xlsxFileOpenPath) && !string.IsNullOrEmpty(sheetName))
-            {
-                FileStream adcFileStream = new FileStream(xlsxFileOpenPath, FileMode.Open);
-                XSSFWorkbook sourceWorkbook = new XSSFWorkbook(adcFileStream);
-                XSSFSheet sourceSheet = (XSSFSheet)sourceWorkbook.GetSheet(sheetName);
-                if (sourceSheet == null)
-                {
-                    MessageBox.Show("猪，这个表名不对啊！！！快去看看有没有这个表名！！");
-                }
-            }
-        }
-
-
-        private void sheetNameTB_TextFinished(object sender, EventArgs e)
-        {
-            
+            //if (!string.IsNullOrEmpty(xlsxFileOpenPath) && File.Exists(xlsxFileOpenPath) && !string.IsNullOrEmpty(sheetName))
+            //{
+            //    FileStream adcFileStream = new FileStream(xlsxFileOpenPath, FileMode.Open);
+            //    XSSFWorkbook sourceWorkbook = new XSSFWorkbook(adcFileStream);
+            //    XSSFSheet sourceSheet = (XSSFSheet)sourceWorkbook.GetSheet(sheetName);
+            //    if (sourceSheet == null)
+            //    {
+            //        MessageBox.Show("猪，这个表名不对啊！！！快去看看有没有这个表名！！");
+            //    }
+            //}
         }
 
         private void firstCloumeTB_TextChanged(object sender, EventArgs e)
         {
-            string input = firstCloumeTB.Text;
-            int output;
-            bool value = int.TryParse(input, out output);
-            if (value)
-            {
-                firstColume = output;
-            }
-            else
-            {
-                MessageBox.Show("输入数字，你是猪么！！");
-            }
+            //string input = firstCloumeTB.Text;
+            //int output;
+            //bool value = int.TryParse(input, out output);
+            //if (value)
+            //{
+            //    firstColume = output;
+            //}
+            //else
+            //{
+            //    MessageBox.Show("输入数字，你是猪么！！");
+            //}
         }
 
         private void lastColumeTB_TextChanged(object sender, EventArgs e)
         {
-            string input = lastColumeTB.Text;
-            int output;
-            bool value = int.TryParse(input, out output);
-            if (value)
-            {
-                lastColume = output;
-            }
-            else
-            {
-                MessageBox.Show("输入数字，你是猪么！！");
-            }
+            //string input = lastColumeTB.Text;
+            //int output;
+            //bool value = int.TryParse(input, out output);
+            //if (value)
+            //{
+            //    lastColume = output;
+            //}
+            //else
+            //{
+            //    MessageBox.Show("输入数字，你是猪么！！");
+            //}
         }
 #endregion
 
+        private int GetInter(string str)
+        {
+            //string input = str;
+            //int output;
+            //bool value = int.TryParse(input, out output);
+            //if (!value)
+            //{
+            //    MessageBox.Show("输入数字，你是猪么！！");
+            //    output = -1;
+            //}
+            //return output;
+            return ToIndex(str);
+        }
+
+        public int ToIndex(string columnName)
+        {
+            if (!Regex.IsMatch(columnName.ToUpper(), @"[A-Z]+"))
+            {
+                MessageBox.Show("输入的列数不对呀!!猪。要输入 ABCD");
+                return -1;
+            }
+            char[] chars = columnName.ToUpper().ToCharArray();
+            int index = chars.Select((t, i) => (t - 'A' + 1) * (int)Math.Pow(26, chars.Length - i - 1)).Sum();
+            return index - 1;
+        }
+
+        public string ToName(int index)
+        {
+            if (index < 0) { throw new Exception("invalid parameter"); }
+            List<string> chars = new List<string>();
+            do
+            {
+                if (chars.Count > 0) index--;
+                chars.Insert(0, ((char)(index % 26 + 'A')).ToString());
+                index = (index - index % 26) / 26;
+            } 
+            while (index > 0);
+            return string.Join(string.Empty, chars.ToArray());
+        }
+
         private void button1_Click_1(object sender, EventArgs e)
         {
+            button1.Text = "执行中..";
+            button1.Enabled = false;
+            bool check = true;
+            if (!File.Exists(xlsxFileOpenPath))
+            {
+                MessageBox.Show("找不到这个文件！！猪，看看文件路径对不对！！");
+                return;
+            }
             FileStream adcFileStream = new FileStream(xlsxFileOpenPath, FileMode.Open);
             XSSFWorkbook sourceWorkbook = new XSSFWorkbook(adcFileStream);
             XSSFSheet sourceSheet = (XSSFSheet)sourceWorkbook.GetSheet(sheetName);
+            if (sourceSheet == null)
+            {
+                MessageBox.Show("找不到这个表名："+sheetName+" 检查一下猪！！ ");
+                adcFileStream.Close();
+                sourceWorkbook.Close();
+                return;
+            }
+            firstColume =  GetInter(firstCloumeTB.Text);
+            lastColume = GetInter(lastColumeTB.Text) + 1;
             XSSFWorkbook destWorkbook = new XSSFWorkbook();
             XSSFSheet destWorkSheet = (XSSFSheet)destWorkbook.CreateSheet(sheetName);
-            destWorkSheet.CreateRow(sourceSheet.PhysicalNumberOfRows);
             for (int i = 0; i < sourceSheet.PhysicalNumberOfRows; i++)
             {
                 IRow row = sourceSheet.GetRow(i);
@@ -152,11 +210,10 @@ namespace ExcelTimeCheck
                                 try
                                 {
                                     string value = dCell.StringCellValue;
-                                    //todo:算法修改，只检测时间00：00
-                                    string[] records = System.Text.RegularExpressions.Regex.Split(value, @"\s{2,}");
-                                    if (records.Length > 3)
+                                    MatchCollection mc = System.Text.RegularExpressions.Regex.Matches(value, @"\d{2}:\d{2}");
+                                    if (mc.Count > 2)
                                     {
-                                        string result = string.Format("{0}  \n{1}", records[0], records[records.Length - 2]);
+                                        string result = string.Format("{0}  \n{1}", mc[0], mc[mc.Count - 1]);
                                         dCell.SetCellValue(result);
                                         ICellStyle styeCellStyle = destWorkbook.CreateCellStyle();
                                         styeCellStyle.FillForegroundColor = 57;
@@ -166,7 +223,8 @@ namespace ExcelTimeCheck
                                 }
                                 catch (Exception ex)
                                 {
-                                    Console.WriteLine("Exception: " + ex.Message);
+                                    check = false;
+                                    MessageBox.Show("执行异常：" + ex.Message);
                                 }
                             }
                         }
@@ -179,6 +237,18 @@ namespace ExcelTimeCheck
             adcFileStream.Close();
             sourceWorkbook.Close();
             destWorkbook.Close();
+
+            if (check)
+            {
+                MessageBox.Show("搞定！！");
+            }
+            else
+            {
+                MessageBox.Show("出错了！！");
+            }
+
+            button1.Text = "执行";
+            button1.Enabled = true;
         }
         
     }
