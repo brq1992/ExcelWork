@@ -200,7 +200,7 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.openBtn);
             this.Name = "Form1";
-            this.Text = "李Dog专用";
+            this.Text = "我大哥专用";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
