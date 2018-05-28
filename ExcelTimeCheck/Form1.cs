@@ -174,7 +174,9 @@ namespace ExcelTimeCheck
             bool check = true;
             if (!File.Exists(xlsxFileOpenPath))
             {
-                MessageBox.Show("找不到这个文件！！猪，看看文件路径对不对！！");
+                MessageBox.Show("找不到这个文件哦~小猪，看看文件路径对不对~");
+                button1.Text = "执行";
+                button1.Enabled = true;
                 return;
             }
             FileStream adcFileStream = new FileStream(xlsxFileOpenPath, FileMode.Open);
@@ -182,9 +184,11 @@ namespace ExcelTimeCheck
             XSSFSheet sourceSheet = (XSSFSheet)sourceWorkbook.GetSheet(sheetName);
             if (sourceSheet == null)
             {
-                MessageBox.Show("找不到这个表名："+sheetName+" 检查一下猪！！ ");
+                MessageBox.Show("找不到这个表名哦！小猪，检查一下表名对不对：" + sheetName);
                 adcFileStream.Close();
                 sourceWorkbook.Close();
+                button1.Text = "执行";
+                button1.Enabled = true;
                 return;
             }
             firstColume =  GetInter(firstCloumeTB.Text);
@@ -199,12 +203,20 @@ namespace ExcelTimeCheck
                 {
                     for (int j = 0; j < lastColume; j++)
                     {
-
                         ICell sCell = row.GetCell(j);
                         ICell dCell = dRow.CreateCell(j);
                         if (sCell != null && dCell != null)
                         {
-                            dCell.SetCellValue(sCell.StringCellValue);
+                            string cellStr = "";
+                            try
+                            {
+                                cellStr = sCell.StringCellValue;
+                            }
+                            catch (InvalidOperationException exception)
+                            {
+                                cellStr = "该格异常！";
+                            }
+                            dCell.SetCellValue(cellStr);
                             if (j >= firstColume)
                             {
                                 try
@@ -240,7 +252,14 @@ namespace ExcelTimeCheck
 
             if (check)
             {
-                MessageBox.Show("搞定！！");
+                DialogResult dr = MessageBox.Show("是否打开表格", "完成", MessageBoxButtons.OKCancel, MessageBoxIcon.Question);
+                if (dr == DialogResult.OK)
+                {
+                    if (File.Exists(xlsxFileOutputPath))
+                    {
+                        System.Diagnostics.Process.Start(xlsxFileOutputPath);
+                    }
+                }
             }
             else
             {
@@ -250,6 +269,7 @@ namespace ExcelTimeCheck
             button1.Text = "执行";
             button1.Enabled = true;
         }
+
         
     }
 }
